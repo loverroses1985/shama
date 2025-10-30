@@ -140,6 +140,34 @@ app.post('/api/upload', authMiddleware, upload.single('file'), (req, res) => {
   res.json({ filename: req.file.filename, path: '/uploads/' + req.file.filename });
 });
 app.use('/uploads', express.static(uploadDir));
+import express from 'express'
+import { supabase } from './supabaseClient.js'
+
+const app = express()
+app.use(express.json())
+
+app.post('/api/save', async (req, res) => {
+  const { name, email, message } = req.body
+
+  const { data, error } = await supabase
+    .from('users_data')
+    .insert([{ name, email, message }])
+
+  if (error) return res.status(400).json({ error: error.message })
+  res.json({ success: true, data })
+})
+
+app.get('/api/users', async (req, res) => {
+  const { data, error } = await supabase
+    .from('users_data')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) return res.status(400).json({ error: error.message })
+  res.json(data)
+})
+
+app.listen(3000, () => console.log('Server running on port 3000'))
 
 // Fallback to index.html for SPA routing
 app.get('*', (req, res) => {
